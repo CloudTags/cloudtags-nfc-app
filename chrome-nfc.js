@@ -89,7 +89,7 @@ function writeToCard(cardHandle, protocol, string, block) {
         writeToCard(cardHandle, protocol, string, block + 1)
       }
       else {
-        onCardWrite();
+        onCardWrite(string);
       }
     }, function(error) {
       console.log("Error writing blocks: " + error);
@@ -114,13 +114,35 @@ function readFromCard(cardHandle, protocol) {
 function onCardRead(value) {
   waitToRestart();
   showSuccess("Successfully read data: " + value);
+  postToServer(value);
 }
 // Displays a success message when a card is written
-function onCardWrite() {
+function onCardWrite(value) {
   waitToRestart();
-  showSuccess("Successfully wrote value.");
+  showSuccess("Successfully wrote value: " + value);
   document.querySelector("#write-value").value = "";
 }
+
+function postToServer(value) {
+  var url = !!document.querySelector("#is-development:checked") ? "http://cloudtags-api-staging.herokuapp.com" : "http://cloudtags-api-production.herokuapp.com"
+  url += "/kiosks/" + document.querySelector("#kiosk-id").value
+  var data = {event: "nfc_tap", data: { tag_data: value }};
+  $.ajax({
+    type: "POST",
+    beforeSend: function(request) {
+      request.setRequestHeader('Content-Type', 'application/json');
+      request.setRequestHeader("X-API-ID", document.querySelector("#client-id").value)
+      request.setRequestHeader("X-API-KEY", document.querySelector("#api-key").value)
+    },
+    url: url,
+    data: JSON.stringify(data),
+    processData: false,
+    success: function(message) {
+      console.log(message)
+    }
+  });
+}
+
 // Displays a read or write error
 function onError(errorCode) {
   

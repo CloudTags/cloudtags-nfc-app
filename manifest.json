@@ -2,7 +2,7 @@
   "manifest_version": 2,
   "name": "CloudTags NFC App",
   "description": "CloudTags app for reading and writing connected tags.",
-  "version": "0.0.0.0",
+  "version": "1.0.0.2",
   "app": {
     "background": {
       "persistent": false,
