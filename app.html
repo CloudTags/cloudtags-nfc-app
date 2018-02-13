@@ -6,7 +6,10 @@
   <link href="app.css" rel="stylesheet" type="text/css" />
   <script src="lib/jquery-2.1.0.min.js"> </script>
 </head>
-<body>
+<body style="width:100%; height:100vh">
+  <webview id="ct-webview" src = "http://localhost:3000" partition="trusted" style="width:100%; height: 100%">
+  </webview>
+  <!--
   <div class="wrapper">
     <div class="page-header">
       <h1>CloudTags NFC App</h1>
@@ -32,9 +35,9 @@
    </div>
    <div class="alert alert-success" id="success-message"style="display: none;">Action Successfully Completed.</div>
    <div class="alert alert-danger" id="error-message"style="display: none;">Something went wrong.</div>
+  -->
   <script src="google-smart-card-client-library.js"></script>
-  <script src="chrome-nfc.js"></script>
+  <script src="my-nfc.js"></script>
   <script src="app.js"></script>
-
 </body>
 </html>

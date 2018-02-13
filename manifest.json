@@ -11,5 +11,16 @@
         "background.js"
       ]
     }
+  },
+  "permissions": [
+    "webview"
+  ],
+  "webview": {
+    "partitions": [
+      {
+        "name":"trusted",
+        "accessible_resources":["my-nfc.js"]
+      }
+    ]
   }
 }
