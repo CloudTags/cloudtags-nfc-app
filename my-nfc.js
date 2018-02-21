@@ -59,11 +59,17 @@ class CloudTagsNfc {
               self._read(handle, protocol);
             }
           }, function(error) {
-            self.onError("Error when card inserted.")
+            self.onReadError("Error when card inserted.")
+            setTimeout(function() {
+              self._listen();
+            }, 10000)
           })
         })
       }, function(error) {
-        self.onError("Error finding card.")
+        self.onWriteError("Error finding card.")
+        setTimeout(function() {
+          self._listen();
+        }, 10000)
       })
     });
   }
@@ -76,7 +82,10 @@ class CloudTagsNfc {
         // When a card is removed, restart the listening process
         self._listen();
       }, function(error) {
-        self._onError("Error finding card.")
+        self.onReadError("Error finding card.")
+        setTimeout(function() {
+          self._listen();
+        }, 10000)
       })
     });
   }
