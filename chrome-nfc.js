@@ -171,9 +171,7 @@ function getProtocol(protocol) {
 }
 
 // Get the write value
-function writeData() {
-  return document.querySelector("#write-value").value
-}
+
 // Flash a success message
 function showSuccess(message) {
   document.querySelector("#success-message").innerHTML = message;

@@ -1,8 +1,12 @@
 class CloudTagsNfc {
   constructor(callbacks) {
-    this.onError = callbacks.onError;
-    this.onWrite = callbacks.onWrite;
     this.onRead = callbacks.onRead;
+    this.onWrite = callbacks.onWrite;
+
+    this.onReadError = callbacks.onReadError;
+    this.onWriteError = callbacks.onWriteError;
+
+    this.getWriteData = callbacks.getWriteData;
     this._start()
 
     // Data to be written
@@ -20,11 +24,11 @@ class CloudTagsNfc {
     this.apiContext.addOnInitializedCallback(function(initializedApi) {
       self.api = initializedApi;
       // Connect to the port and list the available reader
-      self.api.SCardEstablishContext(API.SCARD_SCOPE_SYSTEM, null, null).then(function(result){
+      self.api.SCardEstablishContext(self.API.SCARD_SCOPE_SYSTEM, null, null).then(function(result){
         result.get(function(establishedCardContext) {
           self.context = establishedCardContext;
           // Use the first available reader
-          self.api.SCardListReaders(context, null).then(function(result) {
+          self.api.SCardListReaders(self.context, null).then(function(result) {
             result.get(function(readers) {
               self.reader = readers[0];
               self._listen();
@@ -43,13 +47,13 @@ class CloudTagsNfc {
   _listen() {
     var self = this;
     console.log("Listening for cards...");
-    this.api.SCardGetStatusChange(context, 31536000, [API.createSCardReaderStateIn(self.reader, API.SCARD_STATE_EMPTY)]).then(function(result){
+    this.api.SCardGetStatusChange(self.context, 31536000, [self.API.createSCardReaderStateIn(self.reader, self.API.SCARD_STATE_EMPTY)]).then(function(result){
       result.get(function(result) {
         console.log("Card found. Connecting to reader...");
         self.api.SCardConnect(self.context, self.reader, self.API.SCARD_SHARE_SHARED, self.API.SCARD_PROTOCOL_ANY).then(function(result) {
           result.get(function(handle, protocol) {
-            if(!!writeData()) {
-              self._write(handle, protocol, self.writeData())
+            if(!!self.getWriteData()) {
+              self._write(handle, protocol, self.getWriteData())
             }
             else {
               self._read(handle, protocol);
@@ -67,7 +71,7 @@ class CloudTagsNfc {
   _wait() {
     var self = this;
     // When a card is inserted, wait for the card to be removed before starting the reading logic again
-    self.api.SCardGetStatusChange(context, 31536000, [self.API.createSCardReaderStateIn(self.reader, self.API.SCARD_STATE_PRESENT)]).then(function(result){
+    self.api.SCardGetStatusChange(self.context, 31536000, [self.API.createSCardReaderStateIn(self.reader, self.API.SCARD_STATE_PRESENT)]).then(function(result){
       result.get(function(result) {
         // When a card is removed, restart the listening process
         self._listen();
@@ -88,14 +92,15 @@ class CloudTagsNfc {
         // Calls the result success
         // Writes in chunks
         if(block < self.maxStringLength) {
-          writeToCard(cardHandle, protocol, string, block + 1)
+          self._write(cardHandle, protocol, string, block + 1)
         }
         else {
-          self.onCardWrite(string);
+          self._wait();
+          self.onWrite(string);
         }
       }, function(error) {
         console.log("Error writing blocks: " + error);
-        // Calls the result error
+        self.onWriteError(error.message);
       })
     });
   }
@@ -103,18 +108,21 @@ class CloudTagsNfc {
     var self = this;
     console.log("Connected to reader. Reading from card...")
     // Get the read command
-    var command = [0xFF, 0xB0, 0x00, startingBlock, 0x10];
-    api.SCardTransmit(cardHandle, self._getProtocol(protocol), command).then(function(result) {
+    var command = [0xFF, 0xB0, 0x00, self.startingBlock, 0x10];
+    self.api.SCardTransmit(cardHandle, self._getProtocol(protocol), command).then(function(result) {
       result.get(function(responseProtocol, responseData) {
         // Calls the result success
-        self.onCardRead(self._decodeData(responseData.splice(0, responseData.length - 2)))
+        self._wait();
+        self.onRead(self._decodeData(responseData.splice(0, responseData.length - 2)))
       }, function(result) {
         // Calls the result error
+        console.log("Error reading blocks: " + error);
+        self.onReadError(error.message);
       })
     });
   }
   _getProtocol(protocol) {
-    return protocol == API.SCARD_PROTOCOL_T0 ? API.SCARD_PCI_T0 : API.SCARD_PCI_T1;
+    return protocol == this.API.SCARD_PROTOCOL_T0 ? this.API.SCARD_PCI_T0 : this.API.SCARD_PCI_T1;
   }
   _decodeData(arr) {
     return arr.map(function(value) {

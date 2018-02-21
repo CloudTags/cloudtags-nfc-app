@@ -75,3 +75,11 @@ pre {
 .small {
   height: 10px !important;
 }
+
+.form {
+    padding: .5rem;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-around;
+}
